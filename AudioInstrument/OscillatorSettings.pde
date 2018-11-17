@@ -1,3 +1,8 @@
+/*
+ *  OscillatorSettings
+ *  Author: Ian Effendi
+ *  Helper class to keep track of oscillator settings for each oscillator in the 3Osc instrument.
+*/
 class OscillatorSettings {
 
   int id;
@@ -7,6 +12,8 @@ class OscillatorSettings {
   float sustain;
   float release;
   int waveformID;
+  
+  float detune;
     // Set default settings.
   OscillatorSettings(int oscillatorID) {
     
@@ -14,18 +21,22 @@ class OscillatorSettings {
      id = oscillatorID;
      
      // Set the default.
-     amplitude = 1.0;
+     amplitude = 0.33;
      attack = 0.04;
      decay = 0.01;
      sustain = 1.0;
      release = 0.1;
-     waveformID = 1;    
+     waveformID = 1;
+     
+     // Detune amount defaults.
+     detune = 0.0;;    
   }
   
   public String toString() {
     String settings = "";
     
-    settings += "Osc (" + getID() + ") ";
+    settings += "[Osc::" + getID() + "] - ";
+    settings += "[DETUNE::" + getDetune() + " cents] ";
     settings += "[AMP::" + getAmplitude() + "] ";
     settings += "[ATK::" + getAttack() + "] ";
     settings += "[DEC::" + getDecay() + "] ";
@@ -37,16 +48,16 @@ class OscillatorSettings {
   }
   
   private String getWaveformName() {
-    switch(getWaveformID()) {
-      case '1':
+    switch(str(getWaveformID())) {
+      case "1":
         return "SINE";
-      case '2':
+      case "2":
         return "TRIANGLE";
-      case '3':
+      case "3":
         return "SAW";
-      case '4':
+      case "4":
         return "SQUARE";
-      case '5':
+      case "5":
         return "QUARTERPULSE";
     }
     return "NULL";
@@ -119,6 +130,16 @@ class OscillatorSettings {
     }
   }
   
+  // Return detune amount in cents.
+  public float getDetune() {
+    return detune;
+  }
+  
+  // Constrains detune amount to either an octave above or below.
+  public void setDetune(float value) {
+    detune = constrain(value, -100, 100);
+  }
+  
   // Process input from the keyboard.
   public void processInput(String input){
     if(input != null) {
@@ -141,7 +162,7 @@ class OscillatorSettings {
         case "+":
           setDecay(getDecay() + 0.05);
           break;
-        case "-":
+        case "_":
           setDecay(getDecay() - 0.05);
           break;
           
@@ -153,6 +174,30 @@ class OscillatorSettings {
           setAmplitude(getAmplitude() - 0.25);
           break;
           
+        // detune
+        case ")":
+          setDetune(getDetune() + 10);
+          break;
+        case "(":
+          setDetune(getDetune() - 10);
+          break;
+          
+        // release
+         case "=":
+          setRelease(getRelease() + 0.05);
+          break;
+        case "-":
+          setRelease(getRelease() - 0.05);
+          break;
+        
+        // sustain 
+        case "}":
+          setSustain(getSustain() + 0.05);
+          break;
+        case "{":
+          setSustain(getSustain() - 0.05);
+          break;
+        
       }
     }
   }

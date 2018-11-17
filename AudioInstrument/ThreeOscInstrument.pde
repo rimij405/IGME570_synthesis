@@ -2,43 +2,63 @@
 *  ThreeOscInstrument
 *  Author: Ian Effendi
 *  Instrument must be implemented by classes that wish to be used with Minim.
+*
+*  Referenced Minim API docs for ADSR, Line, and Oscil.
 */
 class ThreeOscInstrument implements Instrument {
-  Oscil osc1; // Oscillator 1.
-  Oscil osc2; // Oscillator 2.
-  Oscil osc3; // Oscillator 3.
   Summer wave; // Summer that joins the oscillators.
   
-  Line ampEnv; // Envelope to articulate cleanly.
+  Oscil[] oscs; // Oscillators.
+  ADSR[] gates; // ADSR gate.
+  Line[] ampEnvs; // Envelope to articulate cleanly.
   
   /*
     Takes three frequencies, one for each oscillator, and three waveforms.
   */
-  ThreeOscInstrument(float f1, Waveform w1, float f2, Waveform w2, float f3, Waveform w3){
-    osc1 = new Oscil(f1, 0, w1);
-    osc2 = new Oscil(f2, 0, w2);
-    osc3 = new Oscil(f3, 0, w3);
-    
+  ThreeOscInstrument(OscillatorSettings[] os, float[] freqs, Waveform[] waves){
+    oscs = new Oscil[3];
+    gates = new ADSR[3];
+    ampEnvs = new Line[3];    
     wave = new Summer();
-    osc1.patch( wave );
-    osc2.patch( wave );
-    osc3.patch( wave );
-  
-    ampEnv = new Line();
-    ampEnv.patch( osc1.amplitude );
-    ampEnv.patch( osc2.amplitude );
-    ampEnv.patch( osc3.amplitude );
+    
+    // Create each new oscillator.
+    for(int i = 0; i < oscs.length; i++) {
+      oscs[i] = new Oscil(freqs[i], 0.5, waves[i]);
+      gates[i] = new ADSR(os[i].getAmplitude(), os[i].getAttack(), os[i].getDecay(), os[i].getSustain(), os[i].getRelease());
+      oscs[i].patch( gates[i] );
+      ampEnvs[i] = new Line();
+      ampEnvs[i].patch( oscs[i].amplitude ); // Patch amplitude.
+    }
+    
+    wave.patch( out );
   } 
+  
+  // Return the output for each individual oscillator's amplitude. 
+  Line getLineOut(int oscIndex) {
+    if(oscIndex < 0 || oscIndex >= oscs.length) {
+       return null; 
+    }
+    return ampEnvs[oscIndex];
+  }
   
   void noteOn(float duration) {
     // Attach oscilator to the output to make sound.
-    wave.patch(out);
-    ampEnv.activate(duration, 0.20f, 0);
+    // wave.patch(out);
+    // ampEnvs[0].activate(duration, 0.20f, 0);
+    
+    for(int i = 0; i < oscs.length; i++) {
+      gates[i].noteOn();
+      gates[i].patch( wave );
+    }
   }
   
   // Called when the instrument should stop making a sound.
   void noteOff() {
-    wave.unpatch(out);
+    // wave.unpatch( out );
+    for(int i = 0; i < oscs.length; i++) {
+      gates[i].noteOff();
+      gates[i].unpatchAfterRelease( wave );
+    }    
   }  
   
 }

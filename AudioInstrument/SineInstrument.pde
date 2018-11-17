@@ -2,6 +2,8 @@
 *  SineInstrument
 *  Author: Ian Effendi
 *  Instrument must be implemented by classes that wish to be used with Minim.
+*
+*  Referenced from Al Biles provided class files. Not used in final demo.
 */
 class SineInstrument implements Instrument {
   Oscil wave; // Oscillator to create sound.
